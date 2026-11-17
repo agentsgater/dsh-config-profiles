@@ -1,5 +1,5 @@
 {
   "version": "0.1.0",
-  "notes": "Initial public release of the DSH configuration-profiles panel.",
-  "source": "https://github.com/OWNER/REPO"
+  "notes": "首个公开版本：命名档案保存/应用、自动备份、导入导出、恢复官方默认，附开发诊断与更新检查。",
+  "source": "https://github.com/agentsgater/dsh-config-profiles"
 }

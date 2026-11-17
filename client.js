@@ -15,7 +15,7 @@ window.__ModuleLoader__.load({
      * this plugin's repository (see README "开发与升级"). Leave empty to disable the
      * check and show "update source not configured" instead of failing silently.
      */
-    const UPDATE_FEED = ''
+    const UPDATE_FEED = 'https://raw.githubusercontent.com/agentsgater/dsh-config-profiles/main/version.json'
 
     function cmpVersion(a, b) {
       const split = (v) => String(v || '').replace(/^v/, '').split('-')

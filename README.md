@@ -1,7 +1,14 @@
-# 配置档案（Configuration profiles）
+# 配置档案 · DSH Configuration Profiles
 
-DSH 侧栏面板：把当前**启用的插件组合**存成一份命名档案（如「开发代码」「开发插件」「其它」），
+[![ci](https://github.com/agentsgater/dsh-config-profiles/actions/workflows/ci.yml/badge.svg)](https://github.com/agentsgater/dsh-config-profiles/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-%3E%3D0.2.2--rc.1-1f6feb)](https://github.com/deepseek-ai/deepseek-harness)
+
+DeepSeek Harness 的侧栏面板：把当前**启用的插件组合**存成一份命名档案（如「开发代码」「开发插件」「其它」），
 需要时一键切回；也支持导入/导出 JSON，以及一键恢复官方默认配置。
+
+- 仓库：<https://github.com/agentsgater/dsh-config-profiles>
+- 宿主要求：DSH `>=0.2.2-rc.1 <0.3.0-0`
 
 ## 能力
 
@@ -14,20 +21,23 @@ DSH 侧栏面板：把当前**启用的插件组合**存成一份命名档案（
 | 恢复官方默认 | 启用随 DSH 提供且默认列出的 bundle，停用其余（本插件自身永不停止，否则界面会消失） |
 | 重命名 / 删除 | 档案名可随时修改；删除有二次确认 |
 
-## 数据与安全
+## 安装
 
-- 档案存在浏览器 `localStorage` 的 `dsh-config-profiles/v1` 键下，导出文件可跨机器迁移。
-- 配置变更是通过 DSH 内置的 `pluginManager` 服务完成的（与插件管理面板同一套路径），
-  不直接改写 profile 的 `package.json` / `cordis.patch.yml`。
-- 部分改动返回 `restart-required`：面板会提示「部分改动需要重启 DSH 才能完全生效」。
+这是一个通过本地路径挂载的 DSH bundle（`private: true`，暂未发布到 npm）：
 
-## Requirements
+```text
+plugin_manager install_bundle target=D:\path\to\config-profiles
+```
 
-- DSH（`engines.dsh`）：`>=0.2.2-rc.1 <0.3.0-0`
-  （面板用到的 `sidebar.panellist` 槽位是 0.2.x 中后段才有的，0.2.0/0.2.1 上别指望能挂上。）
-- 客户端半边（侧栏面板）需要 Web GUI；安装后刷新页面才会出现图标。
+安装后侧栏面板图标区出现「配置档案」图标；**客户端插件需要刷新页面**。
+
+## 兼容性
+
+- `engines.dsh`：`>=0.2.2-rc.1 <0.3.0-0`
+  （面板用到的 `sidebar.panellist` 槽位是 0.2.x 中后段才有的，0.2.0 / 0.2.1 上挂不上。）
+- 客户端半边需要 Web GUI。
 - `peerDependencies` 里声明了 `@deepseek-ai/dsh-client-ui-sidebar`、`@deepseek-ai/dsh-client-ui-layout`，
-  并标为 `optional`：它们是**宿主内置的虚拟模块**，不是 npm 包，所以不能让 pnpm 自动装一份副本，
+  并标为 `optional`：它们是**宿主内置的虚拟模块**，不是 npm 包，不能也不该让 pnpm 再装一份副本，
   只作为版本契约留档。
 
 ## 开发与升级
@@ -37,39 +47,50 @@ DSH 侧栏面板：把当前**启用的插件组合**存成一份命名档案（
 | 控件 | 作用 |
 | --- | --- |
 | 版本 | 显示 `PLUGIN_VERSION`（在 `client.js` 顶部，**改代码时同步改**） |
-| 检查更新 | 读 `UPDATE_FEED` 指向的 JSON，与本地版本比对；未配置时明确提示「未配置更新源」而不是静默失败 |
-| 重新加载界面 | `window.location.reload()`；因为本插件用 `link:` 挂载，改完代码刷新即生效，不用重装 |
-| 复制诊断 | 把插件名/版本/启用数/档案数/locale 绑定状态/最后一条错误复制到剪贴板，排障时直接贴 |
+| 检查更新 | 读 `UPDATE_FEED` 指向的 JSON 与本地版本比对；未配置时明确提示「未配置更新源」，不静默失败 |
+| 重新加载界面 | `window.location.reload()`；本地 `link:` 挂载时改完代码刷新即生效，无需重装 |
+| 复制诊断 | 插件名 / 版本 / 启用数 / 档案数 / locale 绑定状态 / 最后一条错误 → 剪贴板 |
 
-### 更新源怎么配
+### 更新源
 
-仓库根目录的 `version.json` 就是更新源格式：
+仓库根目录的 `version.json` 就是更新源：
 
 ```json
-{ "version": "0.1.0", "notes": "…", "source": "https://github.com/<owner>/<repo>" }
+{ "version": "0.1.0", "notes": "…", "source": "https://github.com/agentsgater/dsh-config-profiles" }
 ```
 
-发版流程：
+`client.js` 里的 `UPDATE_FEED` 指向它的 raw 地址：
 
-1. 改 `package.json` 的 `version`、`client.js` 里的 `PLUGIN_VERSION`、`version.json` 的 `version` —— **三处必须一致**；
-2. 把 `client.js` 里的 `UPDATE_FEED` 设成该文件的 raw 地址，例如
-   `https://raw.githubusercontent.com/<owner>/<repo>/main/version.json`；
-3. 提交并推 tag（`git tag v0.1.0 && git push --tags`）。
-
-`UPDATE_FEED` 为空 = 不检查，面板上会明说「未配置更新源」。
-
-升级注意：
-
-- 本包 `private: true` + profile 用 `link:` 指向本目录，**目录不能删、不能改名**，否则 bundle 解析不到。
-- 改完 `client.js` 只需刷新页面；改 `index.js` 或 `package.json`（含 `engines`/`peerDependencies`）建议重启 DSH。
-
-
-## 安装
-
-在本机 DSH 里用 `plugin_manager` 的 `install_bundle`，target 指向本目录绝对路径：
-
-```
-D:\Documents\deepseek-harness\default-workspace\plugins\config-profiles
+```js
+const UPDATE_FEED = 'https://raw.githubusercontent.com/agentsgater/dsh-config-profiles/main/version.json'
 ```
 
-安装后侧栏面板图标区出现「配置档案」图标；客户端插件需要刷新页面。
+### 发版流程
+
+1. 三处版本号同步：`package.json` 的 `version`、`client.js` 的 `PLUGIN_VERSION`、`version.json` 的 `version`；
+2. 提交并打 tag：`git tag v0.1.0 && git push --tags`；
+3. 在 GitHub 上发布对应的 Release（CI 会校验三处版本一致）。
+
+### 本地开发
+
+```powershell
+node --check client.js
+node --check index.js
+# 改完 client.js 刷新页面即可；改 index.js / package.json 建议重启 DSH
+```
+
+## 目录结构
+
+```text
+client.js           客户端半边（React 面板、槽位注册、i18n）
+index.js            宿主半边（空 apply()，配置变更全部走 pluginManager）
+cordis.patch.yml    bundle 层：insert 一行 id=dsh-config-profiles
+package.json        清单：dsh.bundle.patch / dsh.client.inject / engines / peerDependencies
+version.json        更新源（版本号 + 说明 + 仓库地址）
+locale/{zh,en}.json 界面文案
+.github/workflows/  CI：语法、JSON、版本一致性、清单契约
+```
+
+## 许可
+
+[MIT](LICENSE)
